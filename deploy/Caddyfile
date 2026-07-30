@@ -1,0 +1,14 @@
+# 把 your-domain.com 换成你的真实域名（需提前把 A 记录指向本服务器）。
+# Caddy 会自动申请并续期 Let's Encrypt 证书。
+your-domain.com {
+	encode gzip
+
+	# 只反代 webhook 与健康检查，其余路径返回 404，减少暴露面
+	@allowed path /webhook/* /healthz
+	handle @allowed {
+		reverse_proxy app:8000
+	}
+	handle {
+		respond "not found" 404
+	}
+}

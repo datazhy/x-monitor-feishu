@@ -1,0 +1,22 @@
+# 独立端口 HTTPS + Cloudflare DNS-01 自动签证书。
+# 监听 8443（容器内），不碰 80/443。证书走 DNS 验证，与端口无关。
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN}:8443 {
+	encode gzip
+
+	tls {
+		dns cloudflare {$CF_API_TOKEN}
+	}
+
+	# 只反代 webhook 与健康检查，其余返回 404 减少暴露面
+	@allowed path /webhook/* /healthz
+	handle @allowed {
+		reverse_proxy app:8000
+	}
+	handle {
+		respond "not found" 404
+	}
+}

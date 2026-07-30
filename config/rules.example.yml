@@ -1,0 +1,39 @@
+# ============================================================
+# Filter Rule 配置模板  ——  复制为 rules.yml 后填入真实博主 handle
+#   cp config/rules.example.yml config/rules.yml
+#   python -m scripts.manage_rules sync
+# ------------------------------------------------------------
+# - handle 不带 @，大小写不敏感（from: 查询不区分大小写）。
+# - 单条规则 value 有 255 字符上限；约 9-10 个 handle 一组，超了拆新规则。
+# - 计费按 TwitterAPI 返回量：默认 exclude 掉转推/回复/引用，只留纯原创最省。
+# - 想让某博主也收引用/回复：单独一条规则用 exclude: [retweet]，
+#   并把该 handle 加进 .env 的 PUSH_ALLOW_REPLY_QUOTE。
+# ============================================================
+
+interval_seconds: 1800   # 全局默认间隔（秒）。检查越频繁越贵，按需权衡时效与成本
+default_exclude: [retweet, reply, quote]   # 默认只推纯原创；单条规则可用 exclude 覆盖
+
+rules:
+  # ---- 普通规则：只推纯原创 ----
+  - name: group_a
+    active: true
+    handles:
+      - example_user_1
+      - example_user_2
+      - example_user_3
+
+  - name: group_b
+    active: true
+    handles:
+      - example_user_4
+      - example_user_5
+      - example_user_6
+
+  # ---- 重点账号：放开引用+回复（只排除纯转推），更短间隔 ----
+  #   记得把 handle 也加进 .env 的 PUSH_ALLOW_REPLY_QUOTE
+  - name: vip
+    active: true
+    interval_seconds: 900
+    exclude: [retweet]
+    handles:
+      - example_vip_user

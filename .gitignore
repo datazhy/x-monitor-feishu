@@ -1,0 +1,13 @@
+.env
+data/
+config/rules.yml
+scratchpad/
+*.tgz
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store

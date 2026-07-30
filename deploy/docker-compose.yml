@@ -1,0 +1,35 @@
+# 部署：Caddy 负责 HTTPS（自动签发证书）+ app 接收 webhook。
+# 用法（在仓库根目录）：
+#   cp .env.example .env   # 填好密钥
+#   编辑 deploy/Caddyfile 把 your-domain.com 换成真实域名
+#   docker compose -f deploy/docker-compose.yml up -d --build
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/app/data          # SQLite 持久化
+      - ../config:/app/config
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

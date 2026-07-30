@@ -1,0 +1,22 @@
+# 裸机部署（不用 Docker）：systemd 常驻 uvicorn。
+# 安装：
+#   sudo cp deploy/systemd/x-monitor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now x-monitor
+# 然后用 Caddy/Nginx 反代 https -> 127.0.0.1:8000（见 deploy/Caddyfile）。
+# 补漏/心跳/成本检查由 app 内嵌 APScheduler 处理，无需额外 timer。
+[Unit]
+Description=X tweet monitor -> Feishu push
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/x-monitor
+EnvironmentFile=/opt/x-monitor/.env
+ExecStart=/opt/x-monitor/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

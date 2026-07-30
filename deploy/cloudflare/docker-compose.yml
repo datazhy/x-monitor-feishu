@@ -1,0 +1,38 @@
+# 本服务器专用部署：独立端口 8443 + Caddy(Cloudflare DNS-01) + app。
+# 完全不碰 80/443/nginx/xray。
+# 用法（仓库根目录）：
+#   cp .env.example .env  并填好 DOMAIN / CF_API_TOKEN / ACME_EMAIL / 密钥
+#   docker compose -f deploy/cloudflare/docker-compose.yml up -d --build
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../data:/app/data        # SQLite 持久化
+      - ../../config:/app/config
+    expose:
+      - "8000"
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Caddy.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - ../../.env
+    ports:
+      - "${WEBHOOK_PORT:-8443}:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
