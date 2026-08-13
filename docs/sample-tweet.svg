@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="446" viewBox="0 0 720 446" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <defs>
+    <filter id="sh" x="-6%" y="-6%" width="112%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#1f2329" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="720" height="446" fill="#f5f6f7"/>
+
+  <!-- 机器人头像 -->
+  <circle cx="36" cy="40" r="18" fill="#3370ff"/>
+  <text x="36" y="46" font-size="17" fill="#fff" text-anchor="middle">𝕏</text>
+  <text x="64" y="34" font-size="13" fill="#8f959e">X 推文监控</text>
+  <text x="141" y="34" font-size="11" fill="#a8adb3">机器人</text>
+
+  <!-- 气泡 -->
+  <rect x="64" y="44" width="620" height="378" rx="10" fill="#ffffff" filter="url(#sh)"/>
+
+  <!-- 作者行 -->
+  <text x="88" y="76" font-size="15" font-weight="600" fill="#1f2329">Market Analyst（@market_analyst）</text>
+
+  <!-- 正文（中文译文） -->
+  <text x="88" y="110" font-size="14.5" fill="#1f2329">
+    <tspan x="88" dy="0">美光今天大涨，背后是 HBM 产能被提前锁定到明年年中。</tspan>
+    <tspan x="88" dy="27">几家云厂商的采购合同已经签到 2027 年，这不是短期情绪，</tspan>
+    <tspan x="88" dy="27">而是供给端结构性紧张的开始。</tspan>
+    <tspan x="88" dy="34">存储这一轮和 2018 年那次完全不同：这次需求来自 AI 训练</tspan>
+    <tspan x="88" dy="27">集群，客户集中度更高，价格谈判权在卖方。</tspan>
+  </text>
+
+  <!-- AI 分析 -->
+  <rect x="88" y="264" width="572" height="66" rx="7" fill="#f0f4ff"/>
+  <text x="102" y="286" font-size="13.5" fill="#245bdb" font-weight="600">🤖 AI分析：</text>
+  <text x="102" y="286" font-size="13.5" fill="#1f2329">
+    <tspan x="176" dy="0">推文认为存储涨价源于 HBM 产能被长约锁定，</tspan>
+    <tspan x="102" dy="23">需求来自 AI 集群且客户集中，卖方议价能力较强。</tspan>
+  </text>
+
+  <!-- 分隔线 + 页脚 -->
+  <text x="88" y="360" font-size="13" fill="#c9cdd4">---------------------------</text>
+  <text x="88" y="384" font-size="13" fill="#8f959e">2026-08-13 09:41</text>
+  <text x="88" y="408" font-size="13" fill="#8f959e">查看原文:</text>
+  <text x="152" y="408" font-size="13" fill="#3370ff">https://x.com/market_analyst/status/19...</text>
+</svg>

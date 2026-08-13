@@ -1,6 +1,7 @@
 .env
 data/
 config/rules.yml
+INTEGRATION.md
 scratchpad/
 *.tgz
 *.db

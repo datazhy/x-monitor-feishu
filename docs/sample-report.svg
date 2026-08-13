@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="899" viewBox="0 0 720 899" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif">
+<rect width="720" height="899" fill="#ffffff"/>
+<rect width="720" height="54" fill="#3370ff"/>
+<text x="26" y="34" font-size="16.5" fill="#ffffff" font-weight="600" text-anchor="start">昨日信号 · 8 月 13 日早报</text>
+<text x="30" y="82" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">AI 提炼你关注博主昨日发布的关键信号</text>
+<text x="30" y="104" font-size="12.5" fill="#646a73" font-weight="normal" text-anchor="start">统计区间：8 月 13 日 00:00-23:59，北京时间</text>
+<rect x="26" y="124" width="668" height="62" rx="7" fill="#f0f4ff"/>
+<text x="30" y="146" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">📈 提及股票</text>
+<text x="30" y="169" font-size="13" fill="#245bdb" font-weight="normal" text-anchor="start">美光科技 $MU · 英伟达 $NVDA · Nebius $NBIS · 甲骨文 $ORCL ·</text>
+<text x="30" y="190" font-size="13" fill="#245bdb" font-weight="normal" text-anchor="start">台积电 $TSM · iShares半导体ETF $SOXX</text>
+<line x1="26" y1="216" x2="694" y2="216" stroke="#e5e6eb" stroke-width="1"/>
+<text x="30" y="236" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">📌 今日一句</text>
+<text x="30" y="259" font-size="13.5" fill="#1f2329" font-weight="normal" text-anchor="start">存储与 HBM 成为昨日绝对主线，多位博主同时指向供给紧张；</text>
+<text x="30" y="281" font-size="13.5" fill="#1f2329" font-weight="normal" text-anchor="start">另有对 AI 资本开支见顶的分歧声音出现。</text>
+<line x1="26" y1="297" x2="694" y2="297" stroke="#e5e6eb" stroke-width="1"/>
+<text x="30" y="317" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">🔥 三件最重要的事</text>
+<text x="30" y="343" font-size="13.5" fill="#1f2329" font-weight="600" text-anchor="start">1. HBM 产能被长约锁定至 2027 年</text>
+<text x="38" y="364" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 发生了什么：多家云厂商与存储原厂签订跨年供货协议。</text>
+<text x="38" y="384" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 为什么重要：供给端结构性紧张，价格谈判权转向卖方。</text>
+<text x="38" y="403" font-size="12.8" fill="#245bdb" font-weight="normal" text-anchor="start">· 原推1  原推2</text>
+<text x="30" y="429" font-size="13.5" fill="#1f2329" font-weight="600" text-anchor="start">2. 知名空头披露对 AI 基建股的新空单</text>
+<text x="38" y="450" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 发生了什么：更新持仓，加空数据中心与云算力标的。</text>
+<text x="38" y="470" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 为什么重要：市场对 AI 资本开支持续性首次出现明确分歧。</text>
+<text x="38" y="489" font-size="12.8" fill="#245bdb" font-weight="normal" text-anchor="start">· 原推1  原推2</text>
+<text x="30" y="515" font-size="13.5" fill="#1f2329" font-weight="600" text-anchor="start">3. 半导体设备订单超预期</text>
+<text x="38" y="536" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 发生了什么：先进制程设备订单指引上修。</text>
+<text x="38" y="556" font-size="12.8" fill="#646a73" font-weight="normal" text-anchor="start">· 为什么重要：印证扩产周期仍在早期，而非尾声。</text>
+<text x="38" y="575" font-size="12.8" fill="#245bdb" font-weight="normal" text-anchor="start">· 原推1  原推2</text>
+<line x1="26" y1="591" x2="694" y2="591" stroke="#e5e6eb" stroke-width="1"/>
+<text x="30" y="611" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">📊 主题热度</text>
+<text x="30" y="634" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· 存储/HBM（9条/5位 ↑升温）：涨价预期从情绪转为长约验证。</text>
+<text x="30" y="655" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· AI 算力（6条/4位 →持平）：需求强劲但资金面出现分歧。</text>
+<text x="30" y="676" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· 半导体设备（3条/3位 ↑升温）：扩产周期仍在早期。</text>
+<line x1="26" y1="692" x2="694" y2="692" stroke="#e5e6eb" stroke-width="1"/>
+<text x="30" y="712" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">🔁 连续信号</text>
+<text x="30" y="735" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· 「存储/HBM」已连续 5 天出现，重心从价格转向产能锁定。</text>
+<text x="30" y="762" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">⚠️ 异常信号</text>
+<text x="30" y="785" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· 主题「半导体设备」昨日突然被 3 位博主同时提及（前一日未出现）。</text>
+<text x="30" y="812" font-size="14" fill="#1f2329" font-weight="600" text-anchor="start">👀 你可能错过了</text>
+<text x="30" y="835" font-size="13" fill="#1f2329" font-weight="normal" text-anchor="start">· 一则关于先进封装产能的更新，未上头条但与主线高度相关。</text>
+<line x1="26" y1="857" x2="694" y2="857" stroke="#e5e6eb" stroke-width="1"/>
+<text x="30" y="877" font-size="12" fill="#8f959e" font-weight="normal" text-anchor="start">已折叠噪音：闲聊 7 · 重复 3 · 无新增 5 条</text>
+</svg>
