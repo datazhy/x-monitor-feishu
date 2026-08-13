@@ -22,29 +22,34 @@ def _g(t, key):
 def _prepare_body(raw_text: str) -> tuple[str, str]:
     """按翻译规则得到展示正文 + 可选失败提示。返回 (display_text, note)。
 
-    - 含中文：直接展示（去裸链）
-    - 不含中文但含英文：翻成简体中文，只展示译文；失败则展示原文 + 失败原因
-    - 既无中文也无英文：原样展示
+    - 只有『全英文』推文才翻译，只展示译文；失败则展示原文 + 失败原因
+    - 含中文 / 纯 ticker·符号 / 未配翻译：原样展示（去裸链），不翻译
     """
     text = raw_text or ""
-    if textutils.has_chinese(text):
+    if not textutils.should_translate(text) or not _translate_ready():
         return textutils.strip_urls(text), ""
-    if textutils.has_english(text):
-        if not get_settings().openai_api_key:
-            return textutils.strip_urls(text), ""  # 未配翻译：原文直推，不加提示
-        try:
-            zh = llm.translate_to_zh(text)
-            return textutils.strip_urls(zh), ""
-        except Exception as e:
-            log.warning("翻译失败: %s", e)
-            return textutils.strip_urls(text), f"（自动翻译失败：{e}；以上为原文）"
-    return textutils.strip_urls(text), ""
+    try:
+        zh = llm.translate_to_zh(text)
+        return textutils.strip_urls(zh), ""
+    except Exception as e:
+        log.warning("翻译失败: %s", e)
+        return textutils.strip_urls(text), f"（自动翻译失败：{e}；以上为原文）"
+
+
+def _translate_ready() -> bool:
+    s = get_settings()
+    return bool(s.deepseek_api_key if s.translate_provider == "deepseek" else s.openai_api_key)
+
+
+def _analysis_ready() -> bool:
+    s = get_settings()
+    return bool(s.deepseek_api_key if s.analysis_provider == "deepseek" else s.openai_api_key)
 
 
 def _ai_summary(raw_text: str) -> str:
     """正文非空白字符数 > 阈值 且配置了 key 时，返回中文 AI 分析；否则/失败返回空。"""
     s = get_settings()
-    if not s.openai_api_key:
+    if not _analysis_ready():
         return ""
     if textutils.nonspace_len(raw_text) <= s.ai_summary_min_chars:
         return ""
@@ -55,13 +60,29 @@ def _ai_summary(raw_text: str) -> str:
         return ""
 
 
+def enrich(raw_text: str) -> tuple[str, str, str]:
+    """把原文加工成中文成品。返回 (中文正文, AI分析或'', 失败提示或'')。"""
+    display_text, note = _prepare_body(raw_text)
+    summary = _ai_summary(raw_text)
+    return display_text, summary, note
+
+
 def format_tweet(t: sqlite3.Row | dict) -> str:
     name = _g(t, "author_name") or _g(t, "author_handle")
     handle = _g(t, "author_handle")
     raw_text = _g(t, "text") or ""
 
-    display_text, note = _prepare_body(raw_text)
-    summary = _ai_summary(raw_text)
+    display_text, summary, note = enrich(raw_text)
+    # 落库：让下游（risk-dashboard 等）直接拿中文版，无需自己再翻译
+    tid = _g(t, "tweet_id")
+    if tid:
+        try:
+            from . import db
+
+            db.save_enrichment(str(tid), display_text, summary or None)
+        except Exception as e:
+            log.warning("中文化落库失败 tweet=%s: %s", tid, e)
+
     when = textutils.to_beijing(_g(t, "created_at"))
     url = _g(t, "tweet_url") or ""
 

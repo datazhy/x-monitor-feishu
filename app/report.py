@@ -1,14 +1,15 @@
 """昨日信号 · 早报管线。
 
 流程：收集昨日原创推文 → DeepSeek 去噪/分类/主题聚合 → Python 算硬指标(热度/趋势/连续/异常)
-→ 筛 30-80 条重点 → GPT-5.4 写最终早报 JSON → 渲染飞书交互卡片 → 推送 + 存档。
+→ 筛 30-80 条重点 → DeepSeek 写最终早报 JSON → 渲染飞书交互卡片 → 推送 + 存档。
 
-分工：DeepSeek 便宜处理全量、出结构化标签；Python 算确定性数字；GPT-5.4 只负责判断与写作。
+分工：DeepSeek(flash) 便宜处理全量、出结构化标签；Python 算确定性数字；DeepSeek(pro) 负责判断与写作。
 """
 from __future__ import annotations
 
 import json
 import logging
+import re
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -28,19 +29,39 @@ _DS_SYS = (
     "闲聊/纯互动/无新增信息/重复转述判为 is_noise=true。只输出 JSON。"
 )
 
-_GPT_SYS = (
+_WRITER_SYS = (
     "你是个人情报简报撰稿人，产品名叫「昨日信号」。基于用户提供的【已结构化的昨日推文要点与统计事实】，"
     "写一份中文早报，结论先行、有重点有取舍。严格要求：\n"
     "1) 只依据提供的内容，不得编造价格、数字或事实，不给任何买卖/投资建议。\n"
     "2) topic_heat 里的 tweet_count/author_count 必须原样使用我给的数值，不得改动。\n"
     "3) 正文总长控制在 600-1000 字。\n"
     "4) missed_items 从“高价值但未进前三件事”的要点里挑 1-3 条（近似“你可能错过了”）。\n"
-    "5) 严格输出如下 JSON（不要多余字段、不要 markdown）：\n"
+    "5) continuous_signals / anomaly_signals / missed_items 三者都是【中文完整句子的字符串数组】，"
+    "每个元素是一句可直接展示的中文，禁止输出对象/字段名/英文 key。\n"
+    "6) mentioned_stocks：只能使用我在 detected_tickers 里给出的股票代码，逐个补一个简短的中文/英文公司名"
+    "（不确定就把 name 留空字符串）；不得新增、改写或杜撰任何代码，也不要改变代码本身。\n"
+    "7) 严格输出如下 JSON（不要多余字段、不要 markdown）：\n"
     '{"tldr":"50字内一句话主线","top_events":[{"title":"","what_happened":"","why_it_matters":"",'
     '"related_authors":[],"source_tweet_ids":[]}],'
     '"topic_heat":[{"topic":"","tweet_count":0,"author_count":0,"trend":"rising|stable|falling","summary":""}],'
-    '"continuous_signals":[],"anomaly_signals":[],"missed_items":[]}'
+    '"mentioned_stocks":[{"ticker":"MU","name":"美光"}],'
+    '"continuous_signals":["某主题已连续N天出现，讨论重心从X转向Y。"],'
+    '"anomaly_signals":["某博主昨日发推N条明显高于平时，集中在X。"],'
+    '"missed_items":["一条高价值但未上头条的动态。"]}'
 )
+
+# cashtag：$AAPL / $BRK.B 这类。用于确定性提取"提及股票"，不依赖 LLM、不会臆造。
+_CASHTAG_RE = re.compile(r"\$([A-Za-z]{1,6})(?:\.([A-Za-z]{1,2}))?\b")
+
+
+def extract_tickers(tweets: list[dict], top: int = 30) -> list[tuple[str, int]]:
+    """从原始推文正文提取 $代码，按出现频次降序返回 [(代码, 次数)]。"""
+    cnt: dict[str, int] = defaultdict(int)
+    for t in tweets:
+        for m in _CASHTAG_RE.finditer(t.get("text") or ""):
+            sym = m.group(1).upper() + (f".{m.group(2).upper()}" if m.group(2) else "")
+            cnt[sym] += 1
+    return sorted(cnt.items(), key=lambda x: (-x[1], x[0]))[:top]
 
 
 def yesterday_bj() -> str:
@@ -135,7 +156,7 @@ def continuity(day: str, topic_stats: list[dict]) -> list[dict]:
 
 
 def anomalies(tweets: list[dict], classified: list[dict], topic_stats: list[dict], day: str) -> list[str]:
-    """异常信号候选（Python 算事实，交 GPT 润色）。"""
+    """异常信号候选（Python 算事实，交 DeepSeek 润色）。"""
     hints: list[str] = []
     cnt: dict[str, int] = defaultdict(int)
     for t in tweets:
@@ -156,8 +177,8 @@ def preference_topics() -> list[str]:
     return [tp for tp, _ in sorted(hist.items(), key=lambda x: -len(x[1]))[:5]]
 
 
-def write_report(day: str, selected, topic_stats, cont, anom, prefs, id2url) -> dict:
-    """GPT-5.4 写最终早报 JSON。"""
+def write_report(day: str, selected, topic_stats, cont, anom, prefs, id2url, tickers=None) -> dict:
+    """DeepSeek 写最终早报 JSON。"""
     facts = {
         "date": day,
         "selected_tweets": [
@@ -171,20 +192,67 @@ def write_report(day: str, selected, topic_stats, cont, anom, prefs, id2url) -> 
             for c in selected
         ],
         "topic_heat": topic_stats[:8],
+        # 已从原文确定性提取的股票代码（按频次降序），DeepSeek 只需补公司名、不得改动
+        "detected_tickers": [sym for sym, _ in (tickers or [])],
         "continuity": cont,
         "anomaly_hints": anom,
         "user_preference_topics": prefs,
     }
-    raw = llm.report_json(_GPT_SYS, json.dumps(facts, ensure_ascii=False), max_completion_tokens=8000)
-    return json.loads(raw)
+    user = json.dumps(facts, ensure_ascii=False)
+    # LLM 输出 JSON 偶发格式错误，重试 3 次并做基础修复
+    last_err: Exception | None = None
+    for attempt in range(3):
+        try:
+            raw = llm.report_json(_WRITER_SYS, user, max_completion_tokens=8000)
+            return json.loads(_repair_json(raw))
+        except json.JSONDecodeError as e:
+            last_err = e
+            log.warning("早报 JSON 解析失败(第 %d 次)：%s", attempt + 1, e)
+    raise RuntimeError(f"早报 JSON 连续 3 次解析失败：{last_err}")
+
+
+def _repair_json(raw: str) -> str:
+    """去掉 markdown 围栏、截取最外层大括号，修掉常见的尾随逗号。"""
+    import re
+
+    s = raw.strip()
+    if s.startswith("```"):
+        s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s, flags=re.MULTILINE).strip()
+    i, j = s.find("{"), s.rfind("}")
+    if i != -1 and j != -1 and j > i:
+        s = s[i : j + 1]
+    return re.sub(r",(\s*[}\]])", r"\1", s)  # 尾随逗号
 
 
 # ---------------- 飞书卡片渲染 ----------------
-def _card(day: str, rep: dict, noise: dict, id2url: dict) -> dict:
+def _stock_line(tickers, rep, cap: int = 15) -> str | None:
+    """把提及股票渲染成一行：公司名 $代码，按频次降序。代码来自原文正则，名称来自 DeepSeek。"""
+    if not tickers:
+        return None
+    names: dict[str, str] = {}
+    for it in rep.get("mentioned_stocks", []) or []:
+        if isinstance(it, dict) and it.get("ticker"):
+            names[str(it["ticker"]).upper().lstrip("$")] = (it.get("name") or "").strip()
+    parts = []
+    for sym, _ in tickers[:cap]:
+        nm = names.get(sym, "")
+        parts.append(f"{nm} ${sym}" if nm else f"${sym}")
+    line = " · ".join(parts)
+    if len(tickers) > cap:
+        line += f" …等 {len(tickers)} 只"
+    return line
+
+
+def _card(day: str, rep: dict, noise: dict, id2url: dict, tickers=None) -> dict:
     md_title = f"昨日信号 · {_fmt_cn_date(day)}早报"
     elems: list[dict] = [
         {"tag": "div", "text": {"tag": "lark_md",
             "content": f"**AI 提炼你关注博主昨日发布的关键信号**\n统计区间：{_fmt_cn_date(day)} 00:00-23:59，北京时间"}},
+    ]
+    stock_line = _stock_line(tickers or [], rep)
+    if stock_line:
+        elems.append({"tag": "div", "text": {"tag": "lark_md", "content": f"**📈 提及股票**\n{stock_line}"}})
+    elems += [
         {"tag": "hr"},
         {"tag": "div", "text": {"tag": "lark_md", "content": f"**📌 今日一句**\n{rep.get('tldr','')}"}},
     ]
@@ -224,7 +292,7 @@ def _card(day: str, rep: dict, noise: dict, id2url: dict) -> dict:
     ]:
         vals = rep.get(key, [])
         if vals:
-            body = "\n".join(prefix + str(v) for v in vals[:4])
+            body = "\n".join(prefix + _fmt_signal(v) for v in vals[:4])
             elems += [{"tag": "hr"}, {"tag": "div", "text": {"tag": "lark_md", "content": f"**{title}**\n{body}"}}]
 
     # 折叠噪音（footer note）
@@ -240,6 +308,25 @@ def _card(day: str, rep: dict, noise: dict, id2url: dict) -> dict:
         "header": {"template": "blue", "title": {"tag": "plain_text", "content": md_title}},
         "elements": elems,
     }
+
+
+def _fmt_signal(v) -> str:
+    """把信号项渲染成一句中文。兼容模型偶尔返回 dict（提取描述，不露英文字段名）。"""
+    if isinstance(v, str):
+        return v.strip()
+    if isinstance(v, dict):
+        desc = (v.get("description") or v.get("text") or v.get("summary") or v.get("content") or "").strip()
+        author = v.get("author")
+        topic = v.get("topic") or v.get("title")
+        days = v.get("days")
+        if author:
+            head = f"@{author}"
+        elif topic:
+            head = f"「{topic}」" + (f"连续{days}天" if days else "")
+        else:
+            head = ""
+        return f"{head}：{desc}" if head and desc else (desc or head or "")
+    return str(v)
 
 
 def _fmt_cn_date(day: str) -> str:
@@ -275,10 +362,11 @@ def generate_and_send(day: str | None = None) -> dict:
     cont = continuity(day, topic_stats)
     anom = anomalies(tweets, classified, topic_stats, day)
     prefs = preference_topics()
+    tickers = extract_tickers(tweets)
 
-    rep = write_report(day, selected, topic_stats, cont, anom, prefs, id2url)
+    rep = write_report(day, selected, topic_stats, cont, anom, prefs, id2url, tickers)
 
-    card = _card(day, rep, noise, id2url)
+    card = _card(day, rep, noise, id2url, tickers)
     feishu.send_card(settings.feishu_webhook_url, card, settings.feishu_secret)
 
     # 存档 + 趋势记忆

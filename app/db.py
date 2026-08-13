@@ -52,7 +52,34 @@ def init_db() -> None:
     sql = _SCHEMA_PATH.read_text(encoding="utf-8")
     conn = get_conn()
     conn.executescript(sql)
+    # 幂等迁移：老库补齐新增列（CREATE TABLE IF NOT EXISTS 不会改已存在的表）
+    have = {r[1] for r in conn.execute("PRAGMA table_info(tweets)")}
+    for col, ddl in (
+        ("text_zh", "ALTER TABLE tweets ADD COLUMN text_zh TEXT"),
+        ("ai_summary", "ALTER TABLE tweets ADD COLUMN ai_summary TEXT"),
+        ("enriched_at", "ALTER TABLE tweets ADD COLUMN enriched_at TEXT"),
+    ):
+        if col not in have:
+            conn.execute(ddl)
     conn.commit()
+
+
+def save_enrichment(tweet_id: str, text_zh: str, ai_summary: str | None) -> None:
+    """写入中文正文与 AI 分析（供下游直接消费）。"""
+    with tx() as conn:
+        conn.execute(
+            "UPDATE tweets SET text_zh=?, ai_summary=?, enriched_at=? WHERE tweet_id=?",
+            (text_zh, ai_summary, now_iso(), tweet_id),
+        )
+
+
+def tweets_needing_enrichment(limit: int = 50) -> list[sqlite3.Row]:
+    """尚未中文化的推文（回填用）。"""
+    return get_conn().execute(
+        "SELECT tweet_id, text FROM tweets WHERE enriched_at IS NULL "
+        "ORDER BY received_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
 
 
 # ---------------- webhook 幂等 ----------------

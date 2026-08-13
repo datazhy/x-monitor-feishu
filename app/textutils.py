@@ -20,6 +20,22 @@ def has_english(text: str) -> bool:
     return bool(_EN.search(text or ""))
 
 
+# 含至少一个小写字母的英文词：区分"英文散文"(the/dip/earnings) 与"纯 ticker/符号"($MU/$AAPL)
+_EN_WORD = re.compile(r"[A-Za-z]*[a-z][A-Za-z]*")
+
+
+def should_translate(text: str) -> bool:
+    """是否需要 AI 翻译：只有『全英文』才翻译。
+
+    - 含任意中文 → False（覆盖"大量中文 + 几个英文词"，直接推原文）
+    - 无中文但只是零星 ticker/emoji/数字（不足 2 个英文散文词）→ False
+    - 无中文且是成句英文 → True
+    """
+    if has_chinese(text):
+        return False
+    return len(_EN_WORD.findall(text or "")) >= 2
+
+
 def strip_urls(text: str) -> str:
     """去掉正文里的裸链接，但保留原推的换行/段落排版。
 

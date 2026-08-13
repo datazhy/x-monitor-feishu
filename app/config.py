@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o"
+    # 翻译用哪家/哪个模型：openai | deepseek（留空模型=该家默认）
+    translate_provider: str = "openai"
+    translate_model: str = ""
+    # AI 逐条分析（比翻译更需要理解力，可用更强的模型）
+    analysis_provider: str = "openai"
+    analysis_model: str = ""
+    # DeepSeek 推理模型是否关闭 thinking（翻译/分析这类简单任务建议关，省钱提速）
+    deepseek_no_thinking: bool = True
     # 翻译/总结时给 httpx 的可选代理（直连不通时走服务器 xray，如 http://127.0.0.1:xxxx）
     openai_proxy: str = ""
     # AI 总结触发阈值：正文非空白字符数 >此值
@@ -61,10 +69,11 @@ class Settings(BaseSettings):
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-v4-flash"
-    # 最终早报写作（用 openai_api_key/base_url）
-    report_model: str = "gpt-5.4"
+    # 最终早报写作：openai | deepseek（默认 deepseek）
+    report_provider: str = "deepseek"
+    report_model: str = "deepseek-v4-pro"
     report_enabled: bool = True
-    # 进入 GPT 的重点推文上限（30-80）
+    # 进入早报写作的重点推文上限（30-80）
     report_select_max: int = 80
     # 趋势记忆回溯天数（连续信号）
     report_trend_days: int = 7

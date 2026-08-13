@@ -21,7 +21,11 @@ CREATE TABLE IF NOT EXISTS tweets (
     created_at      TEXT,                        -- 推文发布时间 (ISO8601)
     received_at     TEXT NOT NULL,               -- 我方收到时间
     pushed_at       TEXT,                        -- 成功推送飞书时间
-    source          TEXT DEFAULT 'webhook'       -- webhook | backfill
+    source          TEXT DEFAULT 'webhook',      -- webhook | backfill
+    -- 以下为「中文成品」，供本系统与下游（如 risk-dashboard）直接消费
+    text_zh         TEXT,                        -- 中文正文：英文推=译文，中文推=原文(已去裸链)
+    ai_summary      TEXT,                        -- AI 中文分析（>阈值才有，否则 NULL）
+    enriched_at     TEXT                         -- 中文化完成时间；NULL=尚未处理
 );
 CREATE INDEX IF NOT EXISTS idx_tweets_handle ON tweets(author_handle);
 CREATE INDEX IF NOT EXISTS idx_tweets_created ON tweets(created_at);
