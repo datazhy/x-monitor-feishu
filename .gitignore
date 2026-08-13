@@ -1,4 +1,8 @@
+# 密钥：.env 及其一切变体/备份（.env.bak.123、.env.local、.env.save …）
 .env
+.env.*
+!.env.example
+
 data/
 config/rules.yml
 INTEGRATION.md
